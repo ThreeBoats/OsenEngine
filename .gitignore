@@ -1,0 +1,13 @@
+# Visual Studio
+.vs/
+out/
+
+# Build files
+build/
+
+# Compiled files
+*.obj
+*.exe
+
+# doxygen
+doxygen_docs/
