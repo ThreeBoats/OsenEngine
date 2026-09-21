@@ -17,14 +17,7 @@ int main()
 {
 	Sandbox game{};
 
-	gameLog.setMinLogSeverity(osen::Logger::LogSeverity::INFO);
-
-	gameLog.log(osen::Logger::LogSeverity::TRACE, " TRACE");
-	gameLog.log(osen::Logger::LogSeverity::DEBUG, " DEBUG");
-	gameLog.log(osen::Logger::LogSeverity::INFO, " INFO");
-	gameLog.log(osen::Logger::LogSeverity::WARNING, " WARNING");
-	gameLog.log(osen::Logger::LogSeverity::ERROR, " ERROR");
-	gameLog.log(osen::Logger::LogSeverity::FATAL, "FATAL");
+	LOG(gameLog, osen::Logger::LogSeverity::WARNING, "dit is gedaan via macro. wauwie");
 
 	game.run();
 }

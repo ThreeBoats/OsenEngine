@@ -2,6 +2,18 @@
 
 #include <iostream>
 
+
+#ifdef OSEN_RELEASE
+
+#define LOG(logger, severity, message) do {} while(false)
+
+#else 
+
+#define LOG(logger, severity, message) do {logger.log(severity, message);} while(false)
+
+#endif // OSEN_RELEASE
+
+
 namespace osen {
 	class Logger;
 }
@@ -9,7 +21,7 @@ namespace osen {
 class osen::Logger {
 public:
 	Logger(std::string sourceName);
-	
+
 	/// <summary>
 	/// Defines the severity levels used by the logger.
 	/// The levels go from least severe to most severe.

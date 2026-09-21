@@ -16,7 +16,5 @@ protected:
 private:
 	bool m_isRunning = true;
 
-	std::chrono::steady_clock::time_point m_previousFrameTime;
-
 	osen::Engine m_engine;
 };

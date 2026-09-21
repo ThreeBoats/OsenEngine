@@ -19,17 +19,10 @@ osen::Application::~Application()
 
 void osen::Application::run()
 {
-	int i = 0;
-
-	osen::coreLogger.log(Logger::LogSeverity::ERROR, "OsenEngine not complete yet");
+	LOG(osen::coreLogger, osen::Logger::LogSeverity::ERROR, "engine started");
 
 	while (m_isRunning)
 	{
-		auto startFrameTime = std::chrono::steady_clock::now();
 
-		auto deltaTime = std::chrono::duration<double>(
-			startFrameTime - m_previousFrameTime);
-
-		m_previousFrameTime = startFrameTime;
 	}
 }
