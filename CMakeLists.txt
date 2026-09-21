@@ -6,9 +6,9 @@ set(CMAKE_CONFIGURATION_TYPES
     Debug
     Development
     Release
-    CACHE STRING "Available build configurations"
-    FORCE
 )
+
+set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(OsenEngine)
 add_subdirectory(Sandbox)

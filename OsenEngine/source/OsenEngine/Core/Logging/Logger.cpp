@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <chrono>
+#include <format>
+
+std::string getCurrentTimeAsString();
 
 osen::Logger::Logger(std::string sourceName)
 {
@@ -30,19 +33,15 @@ namespace Colors {
 
 void osen::Logger::log(LogSeverity logSeverity, std::string msg)
 {
-#ifdef OSEN_RELEASE
-	return;
-#endif // OSEN_RELEASE
-
-
 	if (logSeverity < m_minLogSeverity)
 		return;
 
 	std::string text;
 
-	text = "[" + m_sourceName + "]" +
-		 LogSeverityToString(logSeverity) +
-		 " " + msg + "\n";
+	text = "[" + getCurrentTimeAsString() + "] "
+		"[" + m_sourceName + "] " +
+		LogSeverityToString(logSeverity) + " "
+		" " + msg + "\n";
 
 	std::cout << text;
 }
@@ -84,4 +83,12 @@ std::string osen::Logger::LogSeverityToString(LogSeverity logSeverity)
 	}
 
 	return text;
+}
+
+std::string getCurrentTimeAsString()
+{
+
+	auto time = std::chrono::system_clock::now();
+
+	return std::format("{:%d-%m-%Y %H:%M:%OS}", time);
 }
