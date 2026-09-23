@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include "Logging/internal/coreLogger.h"
+#include "asserts.h"
 
 osen::Application::Application()
 {
@@ -18,7 +19,7 @@ osen::Application::~Application()
 void osen::Application::run()
 {
 	LOG(osen::coreLogger, osen::Logger::LogSeverity::INFO, "engine started");
-
+	OSEN_ASSERT(true, "statement must be true for assert to be skipped");
 	while (m_isRunning)
 	{
 		LOG(coreLogger, osen::Logger::LogSeverity::INFO, "updated");

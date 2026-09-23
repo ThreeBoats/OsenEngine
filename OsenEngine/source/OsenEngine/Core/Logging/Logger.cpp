@@ -87,8 +87,9 @@ std::string osen::Logger::LogSeverityToString(LogSeverity logSeverity)
 
 std::string getCurrentTimeAsString()
 {
+	auto now = std::chrono::system_clock::now();
 
-	auto time = std::chrono::system_clock::now();
+	auto time = std::chrono::current_zone()->to_local(now);
 
 	return std::format("{:%d-%m-%Y %H:%M:%OS}", time);
 }
