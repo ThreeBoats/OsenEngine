@@ -7,6 +7,7 @@ add_library(OsenEngine STATIC)
 
 #list of "systems/modules" that should be in osen engine
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Core")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/thirdparty")
 
 
 #the engine internals and the games can use all .h files. that is a #TODO
@@ -30,3 +31,5 @@ target_compile_options(OsenEngine PRIVATE
     $<$<CONFIG:Development>:/Zi>
     $<$<CONFIG:Release>:/Zi>
 )
+
+target_link_libraries(OsenEngine PRIVATE glfw)
