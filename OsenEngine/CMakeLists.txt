@@ -7,6 +7,7 @@ add_library(OsenEngine STATIC)
 
 #list of "systems/modules" that should be in osen engine
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Core")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Platform")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/thirdparty")
 
 

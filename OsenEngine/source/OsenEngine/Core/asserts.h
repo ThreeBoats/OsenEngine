@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Logging/Logger.h"
 #include "Logging/internal/coreLogger.h"
 
@@ -19,9 +21,9 @@
 
 #define OSEN_ASSERT(condition, message)                                                     \
         do {                                                                                \
-            if (!condition)                                                                 \
+            if (!(condition))                                                                 \
             {                                                                               \
-                LOG(osen::coreLogger, osen::Logger::LogSeverity::FATAL, message);           \
+                LOG(osen::coreLogger, osen::Logger::LogSeverity::FATAL, std::string("ASSERTING: ") + message);     \
                 OSEN_BREAK();                                                               \
             }                                                                               \
         } while(false)

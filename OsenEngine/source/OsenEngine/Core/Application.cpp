@@ -1,14 +1,17 @@
 #include "Application.h"
 #include <OsenEngine/Core/Logging/Logger.h>
-#include <iostream>
+#include <string>
 #include <thread>
 #include <chrono>
 #include "Logging/internal/coreLogger.h"
 #include "asserts.h"
+#include "Window.h"
 
-osen::Application::Application()
+osen::Application::Application(Config config)
 {
+	WindowConfig windowConfig = config.windowConfig;
 
+	m_window = Window::createWindow(windowConfig);
 }
 
 osen::Application::~Application()

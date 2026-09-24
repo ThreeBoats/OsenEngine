@@ -4,6 +4,7 @@ target_sources(OsenEngine
         
         
  "Application.cpp" "Application.h"
- "Engine.h" "Engine.cpp" 
  "Logging/Logger.h" "Logging/Logger.cpp"
- "Logging/internal/coreLogger.cpp"   "Logging/internal/coreLogger.h" "asserts.h")
+ "Logging/internal/coreLogger.cpp"   "Logging/internal/coreLogger.h" 
+ "asserts.h"  
+ "Window.h" "Window.cpp")
