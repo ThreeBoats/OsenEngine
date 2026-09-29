@@ -18,9 +18,9 @@ private:
 int main()
 {
 	osen::WindowConfig windowConfig;
-	windowConfig.height = 400;
-	windowConfig.width= 400;
-	windowConfig.name = "Sandbox";
+	windowConfig.height = 600;
+	windowConfig.width= 1200;
+	windowConfig.name = "CoolGame.exe (not a virus)";
 
 	osen::Config config;
 

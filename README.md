@@ -1,13 +1,21 @@
 # Osen Engine
 
-OsenEngine is a game engine I am writing, to get better at programming.
+OsenEngine is a game engine I am writing to get better at programming.
 
-## features
+## Goals
+note: I will often update this paragraph, to reflect my newest discoveries.
+
+- first priority is a sort of event system
+- after that i want to start with rendering. I think I will use Vulkan as an API, 
+but abstracted at a high level. So i can switch to DX12 or metal or something else. 
+
+## "features"
 As of now the engine cannot do much. But I hope that sometime, it will be great (or in a few years I stop programming, and this project is abandoned). 
 OsenEngine already has a few "features", such as: 
 - an entry point
 - a main loop in the engine
 - a simple logging system
+- a window that prints out details like the position of your mouse.
 - a simple Doxyfile I did not change much from normal. You can use this to learn about the engine internals.
 
 ## technical details
@@ -31,6 +39,5 @@ Until I add a license, you cannot freely use, or redistribute the code. Although
 
 ## some other things
 - English is not my native language, so I hope it is somewhat understandable.
-- I do **not** use AI for this project for two reasons. 1. I am somewhat anti-ai. 2. If I use AI i don't learn anything.
 - I am always open to feedback
 I hope that some people will get some useful information out of this project. Have a nice day!

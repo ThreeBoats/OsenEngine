@@ -11,7 +11,7 @@ osen::Application::Application(Config config)
 {
 	WindowConfig windowConfig = config.windowConfig;
 
-	m_window = Window::createWindow(windowConfig);
+	m_window = Window::create(windowConfig);
 }
 
 osen::Application::~Application()
@@ -25,7 +25,8 @@ void osen::Application::run()
 	OSEN_ASSERT(true, "statement must be true for assert to be skipped");
 	while (m_isRunning)
 	{
-		LOG(coreLogger, osen::Logger::LogSeverity::INFO, "updated");
-		std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
+		m_window->processEvents();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
 	}
 }

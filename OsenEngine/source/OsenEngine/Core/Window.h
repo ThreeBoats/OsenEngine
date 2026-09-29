@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <string>
+#include "Logging/internal/coreLogger.h"
+
 
 namespace osen
 {
@@ -17,7 +19,10 @@ namespace osen
 	class Window
 	{
 	public:
-		static std::unique_ptr<Window> createWindow(WindowConfig config);
+		static std::unique_ptr<Window> create(WindowConfig config);
+
+		virtual void processEvents() { coreLogger.log(osen::Logger::LogSeverity::ERROR,
+			"this window does not have a process events function"); };
 	protected:
 
 	private:
