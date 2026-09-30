@@ -1,12 +1,13 @@
 #the main engine cmake file. 
 
-
-
 #for now OsenEngine gets included in the GAME executable, for easier start-up
 add_library(OsenEngine STATIC)
 
+find_package(Vulkan)
+
 #list of "systems/modules" that should be in osen engine
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Core")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Rendering")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/OsenEngine/Platform")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/source/thirdparty")
 
@@ -33,4 +34,9 @@ target_compile_options(OsenEngine PRIVATE
     $<$<CONFIG:Release>:/Zi>
 )
 
-target_link_libraries(OsenEngine PRIVATE glfw)
+target_link_libraries(OsenEngine 
+
+	PRIVATE 
+		glfw
+		Vulkan::Vulkan		
+)

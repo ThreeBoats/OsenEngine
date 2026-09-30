@@ -1,17 +1,21 @@
 #include "Application.h"
+
 #include <OsenEngine/Core/Logging/Logger.h>
-#include <string>
-#include <thread>
-#include <chrono>
 #include "Logging/internal/coreLogger.h"
 #include "asserts.h"
 #include "Window.h"
+
+#include <thread>
+#include <chrono>
+
+#include <vulkan/vulkan.hpp>
 
 osen::Application::Application(Config config)
 {
 	WindowConfig windowConfig = config.windowConfig;
 
 	m_window = Window::create(windowConfig);
+	m_renderer = Renderer::create();
 }
 
 osen::Application::~Application()
@@ -21,8 +25,8 @@ osen::Application::~Application()
 
 void osen::Application::run()
 {
-	LOG(osen::coreLogger, osen::Logger::LogSeverity::INFO, "engine started");
-	OSEN_ASSERT(true, "statement must be true for assert to be skipped");
+	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
+
 	while (m_isRunning)
 	{
 		m_window->processEvents();

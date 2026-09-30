@@ -12,4 +12,4 @@ Doxyfile.bak
 
 
 #cmake
-*CMakePresets.json
+CMakePresets.json

@@ -55,6 +55,17 @@ void osen::GLFWWindow::setCallbacks()
         }
     );
 
+    glfwSetWindowMaximizeCallback(m_window, 
+        [](GLFWwindow* window, int maximized)
+        {
+            glfwSetWindowMonitor(window,
+                glfwGetPrimaryMonitor(),
+                0, 0,
+                glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
+                glfwGetVideoMode(glfwGetPrimaryMonitor())->height,
+                glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate);
+        });
+
     glfwSetWindowCloseCallback(
         m_window,
         [](GLFWwindow* window)
