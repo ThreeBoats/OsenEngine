@@ -12,12 +12,17 @@ namespace osen
 		VulkanRenderer(EngineConfig config, const Window& window);
 
 	private:
-
+		
 		void createInstance();
 
 		bool validationLayersEnabled = false;
 
+		/// <summary>
+		/// a reference to the window used to render to
+		/// </summary>
 		const Window& m_window;
+
+
 		vk::raii::Context m_context;
 		vk::raii::Instance m_instance = nullptr;
 	};
