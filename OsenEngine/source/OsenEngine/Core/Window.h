@@ -1,34 +1,31 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "Logging/internal/coreLogger.h"
 
+#include "Config.h"
+
 namespace osen
 {
-	struct WindowConfig
-	{
-		int width = 100;
-		int height = 100;
-		std::string name = "OsenEngine";
-
-		bool shouldFullscreenOnMaximize = true;
-	};
-
 	class Window
 	{
 	public:
-		static std::unique_ptr<Window> create(WindowConfig config);
+		static std::unique_ptr<Window> create(EngineConfig config);
 
 		virtual ~Window() = default;
 
-		virtual void processEvents() { coreLogger.log(osen::Logger::LogSeverity::ERROR,
-			"this window does not have a process events function"); };
-	protected:
+		virtual void processEvents() {
+			coreLogger.log(osen::Logger::LogSeverity::ERROR,
+				"this window does not have a process events function");
+		};
 
-	private:
 
+		//VULKAN ONLY (I think)
+
+		virtual std::vector<const char*> requiredVulkanExtensions() const = 0;
 	};
 
 } // namespace osen

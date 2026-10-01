@@ -7,7 +7,8 @@
 
 namespace osen
 {
-	VulkanRenderer::VulkanRenderer()
+	VulkanRenderer::VulkanRenderer(EngineConfig config, const Window& window)
+		:m_window(window)
 	{
 		LOG(VulkanLogger, Logger::LogSeverity::INFO, "vulkan constructor called");
 

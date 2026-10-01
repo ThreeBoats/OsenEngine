@@ -10,12 +10,12 @@
 
 #include <vulkan/vulkan.hpp>
 
-osen::Application::Application(Config config)
+osen::Application::Application(EngineConfig config)
 {
 	WindowConfig windowConfig = config.windowConfig;
 
-	m_window = Window::create(windowConfig);
-	m_renderer = Renderer::create();
+	m_window = Window::create(config);
+	m_renderer = Renderer::create(config, *m_window);
 }
 
 osen::Application::~Application()

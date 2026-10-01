@@ -5,7 +5,7 @@
 namespace osen
 {
 
-	std::unique_ptr<Window> Window::create(WindowConfig config)
+	std::unique_ptr<Window> Window::create(EngineConfig config)
 	{
 		return std::make_unique<GLFWWindow>(config);
 	}

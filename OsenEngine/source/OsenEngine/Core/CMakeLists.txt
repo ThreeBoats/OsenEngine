@@ -7,4 +7,4 @@ target_sources(OsenEngine
  "Logging/Logger.h" "Logging/Logger.cpp"
  "Logging/internal/coreLogger.cpp"   "Logging/internal/coreLogger.h" 
  "asserts.h"  
- "Window.h" "Window.cpp"  "../Platform/Vulkan/VulkanRenderer.h" "../Platform/Vulkan/VulkanRenderer.cpp")
+ "Window.h" "Window.cpp"  "../Platform/Vulkan/VulkanRenderer.h" "../Platform/Vulkan/VulkanRenderer.cpp" "Config.h")

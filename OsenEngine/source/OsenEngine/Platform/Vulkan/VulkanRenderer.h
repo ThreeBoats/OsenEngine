@@ -9,7 +9,7 @@ namespace osen
 	class VulkanRenderer : public Renderer
 	{
 	public:
-		VulkanRenderer();
+		VulkanRenderer(EngineConfig config, const Window& window);
 
 	private:
 
@@ -17,6 +17,7 @@ namespace osen
 
 		bool validationLayersEnabled = false;
 
+		const Window& m_window;
 		vk::raii::Context m_context;
 		vk::raii::Instance m_instance = nullptr;
 	};

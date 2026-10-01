@@ -6,7 +6,7 @@ OsenEngine is a game engine I am writing to get better at programming.
 note: I will often update this paragraph, to reflect my newest discoveries.
 
 - first priority is a sort of event system
-- after that i want to start with rendering. I think I will use Vulkan as an API, 
+- after that i want to start with rendering. I think I will use Vulkan as an API (I will use Vulkan, I decided), 
 but abstracted at a high level. So i can switch to DX12 or metal or something else. 
 
 ## "features"
@@ -29,7 +29,7 @@ requirements
 1. a C++ compiler, I think only MSVC works, not sure though. (because of CMake-file)
 2. CMake
 
-1. first clone the project with: git clone https://github.com/ThreeBoats/OsenEngine.git
+1. first clone the project and sub-modules with: git clone https://github.com/ThreeBoats/OsenEngine.git --recursive
 2. second move into the engine directory: cd OsenEngine
 3. build or generate the project using CMake.  (use your own favourite way, I have not much experience. Personally I open the folder with the root CMake file in VS22, and then compile from there)
 

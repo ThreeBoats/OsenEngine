@@ -6,16 +6,13 @@
 #include "Window.h"
 #include <OsenEngine/Rendering/Renderer.h>
 
-namespace osen {
-	struct Config
-	{
-		WindowConfig windowConfig;
-	};
+#include "Config.h"
 
+namespace osen {
 	class Application
 	{
 	public:
-		Application(Config config);
+		Application(EngineConfig config);
 		virtual ~Application();
 		void run();
 	protected:
