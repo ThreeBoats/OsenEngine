@@ -15,6 +15,8 @@ namespace osen
 
 		void createInstance();
 
+		bool validationLayersEnabled = false;
+
 		vk::raii::Context m_context;
 		vk::raii::Instance m_instance = nullptr;
 	};
