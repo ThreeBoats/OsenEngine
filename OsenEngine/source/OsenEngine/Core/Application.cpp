@@ -12,8 +12,6 @@
 
 osen::Application::Application(EngineConfig config)
 {
-	WindowConfig windowConfig = config.windowConfig;
-
 	m_window = Window::create(config);
 	m_renderer = Renderer::create(config, *m_window);
 }

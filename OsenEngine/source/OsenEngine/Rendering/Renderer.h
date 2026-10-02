@@ -7,7 +7,6 @@
 
 namespace osen
 {
-	
 
 	class Renderer
 	{

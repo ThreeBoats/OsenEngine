@@ -39,6 +39,9 @@ void osen::GLFWWindow::processEvents()
 
 std::vector<const char*> osen::GLFWWindow::requiredVulkanExtensions() const
 {
+	OSEN_ASSERT(m_config.rendererConfig.api == GraphicsAPI::VULKAN,
+		"vulkan specific function called while not using vulkan.");
+
 	uint32_t count = 0;
 	const char** extensions =
 		glfwGetRequiredInstanceExtensions(&count);

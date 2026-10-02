@@ -34,7 +34,5 @@ int main()
 
 	Sandbox game{ config };
 
-	LOG(gameLog, osen::Logger::LogSeverity::WARNING, "dit is gedaan via macro. wauwie");
-
 	game.run();
 }

@@ -61,6 +61,8 @@ namespace osen
 		{
 			LOG(VulkanLogger, Logger::LogSeverity::INFO, extension.extensionName);
 		}
+
+		m_window.requiredVulkanExtensions();
 	}
 
 }//namespace osen
