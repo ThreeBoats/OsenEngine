@@ -12,6 +12,7 @@
 
 osen::Application::Application(EngineConfig config)
 {
+	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
 	m_window = Window::create(config);
 	m_renderer = Renderer::create(config, *m_window);
 }
@@ -23,7 +24,7 @@ osen::Application::~Application()
 
 void osen::Application::run()
 {
-	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
+	LOG(coreLogger, Logger::LogSeverity::INFO, "engine ready");
 
 	while (m_isRunning)
 	{

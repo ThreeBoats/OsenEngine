@@ -1,13 +1,13 @@
-# Osen Engine
+# OsenEngine
 
 OsenEngine is a game engine I am writing to get better at programming.
 
 ## Goals
 note: I will often update this paragraph, to reflect my newest discoveries.
 
-- first priority is a sort of event system
-- after that i want to start with rendering. I think I will use Vulkan as an API (I will use Vulkan, I decided), 
-but abstracted at a high level. So i can switch to DX12 or metal or something else. 
+- I want to get a triangle on screen as soon as possible (following good architecture). Using vulkan.
+- I also need a event system. But I find that difficult to build. And for now I do not need it.
+- Currently I do not have a clean Window abstraction. I have a Vulkan specific function there. But I could not find a easy way to bypass that. And I strongly believe in not overengineering. I WILL shoot myself in the foot ;)
 
 ## "features"
 As of now the engine cannot do much. But I hope that sometime, it will be great (or in a few years I stop programming, and this project is abandoned). 
@@ -28,6 +28,7 @@ OsenEngine already has a few "features", such as:
 requirements
 1. a C++ compiler, I think only MSVC works, not sure though. (because of CMake-file)
 2. CMake
+3. The Vulkan sdk (and a compatible GPU with driver). You can download it at the [official download page](https://vulkan.lunarg.com/sdk/home).
 
 1. first clone the project and sub-modules with: git clone https://github.com/ThreeBoats/OsenEngine.git --recursive
 2. second move into the engine directory: cd OsenEngine

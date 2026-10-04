@@ -14,7 +14,7 @@ namespace osen
 	private:
 		void createInstance();
 
-		bool validationLayersEnabled = false;
+		bool m_validationLayersEnabled = false;
 
 		/// <summary>
 		/// a reference to the window used to render to
