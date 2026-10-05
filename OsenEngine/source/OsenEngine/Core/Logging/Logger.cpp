@@ -40,8 +40,8 @@ void osen::Logger::log(LogSeverity logSeverity, std::string msg)
 
 	text = "[" + getCurrentTimeAsString() + "] "
 		"[" + m_sourceName + "] " +
-		LogSeverityToString(logSeverity) + " "
-		" " + msg + "\n";
+		LogSeverityToString(logSeverity)
+		+ " " + msg + "\n";
 
 	std::cout << text;
 }
