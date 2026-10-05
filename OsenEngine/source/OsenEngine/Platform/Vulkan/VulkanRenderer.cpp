@@ -10,13 +10,14 @@ namespace osen
 	VulkanRenderer::VulkanRenderer(EngineConfig config, const Window& window)
 		:m_window(window)
 	{
-		LOG(VulkanLogger, Logger::LogSeverity::TRACE, "vulkan constructor called");
+		LOG(VulkanLogger, Logger::LogSeverity::TRACE, "constructor called");
 
 #ifdef OSEN_DEBUG
 		m_validationLayersEnabled = true;
 #endif // OSEN_DEBUG
 
 		createInstance();
+		pickPhysicalDevice();
 	}
 
 
@@ -91,36 +92,160 @@ namespace osen
 			.ppEnabledExtensionNames = requiredExtensions.data()
 		};
 
-		LOG(VulkanLogger, Logger::LogSeverity::TRACE, std::string("Vulkan instance created ") +
+		LOG(VulkanLogger, Logger::LogSeverity::TRACE, std::string("instance created ") +
 			(m_validationLayersEnabled ? "with validation layers enabled" : " "));
 
 		m_instance = vk::raii::Instance(m_context, createInfo);
 	}
 
-}//namespace osen
 
-//		//TMP TODO: change
-//auto physicalDevices = m_instance.enumeratePhysicalDevices();
-//
-//for (auto device : physicalDevices)
-//{
-//	auto info = device.getProperties2();
-//
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, "Device Info");
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    api version: ") + std::to_string(info.properties.apiVersion));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    device id: ") + std::to_string(info.properties.deviceID));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    device name: ") + std::string(info.properties.deviceName.data()));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    device type: ") + std::to_string(static_cast<int>(info.properties.deviceType)));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    driver version: ") + std::to_string(info.properties.driverVersion));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    max image dimension: ") + std::to_string(info.properties.limits.maxImageDimension2D));
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, std::string("    vendor id: ") + std::to_string(info.properties.vendorID));
-//}
-//
-//auto extensions = m_context.enumerateInstanceExtensionProperties();
-//LOG(VulkanLogger, Logger::LogSeverity::INFO, "vulkan extension: ");
-//for (auto extension : extensions)
-//{
-//	LOG(VulkanLogger, Logger::LogSeverity::INFO, extension.extensionName);
-//}
-//
-//m_window.requiredVulkanExtensions();
+	void VulkanRenderer::pickPhysicalDevice()
+	{
+		auto physicalDevices = m_instance.enumeratePhysicalDevices();
+
+		if (physicalDevices.empty())
+			LOG(VulkanLogger, Logger::LogSeverity::FATAL, "no devices with Vulkan support");
+
+		//loop through all devices, if one is suitable, set THE physical device to it. and continue
+		// with new checks. If again a new one is found, it overwrites the previous.
+		for (const auto& device : physicalDevices)
+		{
+			checkPhysicalDevice(device);
+		}
+
+		if (m_physicalDevice == nullptr)
+			LOG(VulkanLogger, Logger::LogSeverity::FATAL, "failed to find a suitable GPU");
+
+		printGpuData();
+	}
+
+	// I really hope I do not have to touch this function again.
+	void VulkanRenderer::checkPhysicalDevice(const vk::raii::PhysicalDevice& device)
+	{
+		std::vector<const char*> requiredDeviceExtension = { vk::KHRSwapchainExtensionName };
+
+		bool hasGraphicsQueue = false;
+		bool supportsVulkan14 = false;
+		bool supportsAllRequiredExtensions = false;
+		bool supportsRequiredFeatures = false;
+
+		// Check if the device supports Vulkan 1.3
+		auto properties = device.getProperties2();
+
+		if (properties.properties.apiVersion >= vk::ApiVersion14)
+			supportsVulkan14 = true;
+
+		// Check if the device has a graphics queue
+		auto queueFamilies = device.getQueueFamilyProperties2();
+
+		for (const auto& queue : queueFamilies)
+		{
+			if (queue.queueFamilyProperties.queueFlags & vk::QueueFlagBits::eGraphics)
+			{
+				hasGraphicsQueue = true;
+				break;
+			}
+		}
+
+		// Check if all required extensions are supported.
+		auto availableDeviceExtensions = device.enumerateDeviceExtensionProperties();
+
+		supportsAllRequiredExtensions = true;
+
+		for (const auto& requiredExtension : requiredDeviceExtension)
+		{
+			bool extensionFound = false;
+
+			for (const auto& availableExtension : availableDeviceExtensions)
+			{
+				if (std::strcmp(availableExtension.extensionName, requiredExtension) == 0)
+				{
+					extensionFound = true;
+					break;
+				}
+			}
+
+			if (!extensionFound)
+			{
+				supportsAllRequiredExtensions = false;
+				break;
+			}
+		}
+
+		// Check if the required features are supported
+		auto features = device.getFeatures2<
+			vk::PhysicalDeviceFeatures2,
+			vk::PhysicalDeviceVulkan11Features,
+			vk::PhysicalDeviceVulkan13Features,
+			vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+
+		if (features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters
+			&& features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
+			&& features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState)
+		{
+			supportsRequiredFeatures = true;
+		}
+
+		// Select this device only if it satisfies all requirements
+		if (hasGraphicsQueue && supportsVulkan14 &&
+			supportsAllRequiredExtensions && supportsRequiredFeatures)
+		{
+			m_physicalDevice = device;
+			return;
+		}
+	}
+	void VulkanRenderer::printGpuData()
+	{
+		auto properties = m_physicalDevice.getProperties();
+		auto memoryProperties = m_physicalDevice.getMemoryProperties();
+
+		std::string gpuName(properties.deviceName.data());
+		std::string gpuType = "Unknown";
+
+		switch (properties.deviceType)
+		{
+		case vk::PhysicalDeviceType::eDiscreteGpu:
+			gpuType = "Discrete GPU";
+			break;
+
+		case vk::PhysicalDeviceType::eIntegratedGpu:
+			gpuType = "Integrated GPU";
+			break;
+
+		case vk::PhysicalDeviceType::eVirtualGpu:
+			gpuType = "Virtual GPU";
+			break;
+
+		case vk::PhysicalDeviceType::eCpu:
+			gpuType = "CPU";
+			break;
+		}
+
+		std::string apiVersion =
+			std::to_string(VK_VERSION_MAJOR(properties.apiVersion)) + "." +
+			std::to_string(VK_VERSION_MINOR(properties.apiVersion)) + "." +
+			std::to_string(VK_VERSION_PATCH(properties.apiVersion));
+
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "GPU: " + gpuName);
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "    GPU type: " + gpuType);
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "    Vendor ID: " + std::to_string(properties.vendorID));
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "    Device ID: " + std::to_string(properties.deviceID));
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "    Driver version: " + std::to_string(properties.driverVersion));
+		LOG(VulkanLogger, Logger::LogSeverity::INFO, "    Vulkan API version: " + apiVersion);
+
+		for (uint32_t i = 0; i < memoryProperties.memoryHeapCount; ++i)
+		{
+			const auto& heap = memoryProperties.memoryHeaps[i];
+
+			if (heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal)
+			{
+				const auto memoryMB = heap.size / (1024ull * 1024ull);
+				const std::string memoryMessage =
+					"GPU memory heap " + std::to_string(i) + ": " +
+					std::to_string(memoryMB) + " MB";
+
+				LOG(VulkanLogger, Logger::LogSeverity::INFO, "    " + memoryMessage);
+			}
+		}
+	}
+}//namespace osen
