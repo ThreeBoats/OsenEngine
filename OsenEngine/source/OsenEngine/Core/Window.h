@@ -22,10 +22,6 @@ namespace osen
 				"this window does not have a process events function");
 		};
 
-
-		//VULKAN ONLY (I think)
-
-		virtual std::vector<const char*> requiredVulkanExtensions() const = 0;
 	};
 
 } // namespace osen

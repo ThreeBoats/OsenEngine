@@ -5,6 +5,8 @@
 
 #include <OsenEngine/Core/Config.h>
 
+#include <GLFW/glfw3.h>
+
 osen::GLFWWindow::GLFWWindow(EngineConfig config)
 {
 	m_config = config;
@@ -56,6 +58,17 @@ std::vector<const char*> osen::GLFWWindow::requiredVulkanExtensions() const
 	};
 }
 
+vk::raii::SurfaceKHR osen::GLFWWindow::createSurface(const vk::raii::Instance& instance) const
+{
+	VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
+
+	const VkResult result = glfwCreateWindowSurface(static_cast<VkInstance>(*instance),
+		m_window,
+		nullptr,
+		&rawSurface);
+
+	return vk::raii::SurfaceKHR(instance, rawSurface);
+}
 
 void osen::GLFWWindow::setCallbacks()
 {
