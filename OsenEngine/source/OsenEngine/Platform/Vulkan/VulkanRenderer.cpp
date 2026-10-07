@@ -274,7 +274,8 @@ namespace osen
 
 		for (int i = 0; i < queueFamilies.size(); i++)
 		{
-			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags{})
+			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags{} 
+				&& m_physicalDevice.getSurfaceSupportKHR(i, m_surface))
 			{
 				queueFamilyIndex = i;
 				break;
