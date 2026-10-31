@@ -7,6 +7,7 @@
 
 #include <thread>
 #include <chrono>
+#include <filesystem>
 
 #include <vulkan/vulkan.hpp>
 
@@ -25,6 +26,8 @@ osen::Application::~Application()
 void osen::Application::run()
 {
 	LOG(coreLogger, Logger::LogSeverity::INFO, "engine ready");
+	LOG(coreLogger, Logger::LogSeverity::INFO,
+		"working directory: " + std::filesystem::current_path().string());
 
 	while (m_isRunning)
 	{

@@ -2,14 +2,20 @@
 #include "VulkanRenderer.h"
 
 #include <string>
+#include <filesystem>
+#include <fstream>
 #include "VulkanWindow.h"
 
 #include "logging/VulkanLogger.h"
+#include <OsenEngine/Core/asserts.h>
 
 std::vector<const char*> requiredDeviceExtension = { vk::KHRSwapchainExtensionName };
 
+
 namespace osen
 {
+	static std::vector<char> readFile(const std::string& filename);
+
 	VulkanRenderer::VulkanRenderer(EngineConfig config, const Window& window)
 		:m_window(window)
 	{
@@ -25,6 +31,8 @@ namespace osen
 		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
+		createSwapchain();
+		createGraphicsPipeline();
 	}
 
 
@@ -45,13 +53,13 @@ namespace osen
 		uint32_t extensionsAmount = static_cast<uint32_t>(requiredExtensions.size());
 
 		// asks vulkan which extensions are available
-		auto availableExtenions = m_context.enumerateInstanceExtensionProperties();
+		auto availableExtensions = m_context.enumerateInstanceExtensionProperties();
 
 		for (const auto& extension : requiredExtensions)
 		{
 			bool isSupported = false;
 
-			for (const auto& availableExtension : availableExtenions)
+			for (const auto& availableExtension : availableExtensions)
 			{
 				if (std::strcmp(extension, availableExtension.extensionName) == 0)
 				{
@@ -249,7 +257,7 @@ namespace osen
 
 			if (heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal)
 			{
-				const auto memoryMB = heap.size / (1024ull * 1024ull);
+				const auto memoryMB = heap.size / (1024 * 1024);
 				const std::string memoryMessage =
 					"GPU memory heap " + std::to_string(i) + ": " +
 					std::to_string(memoryMB) + " MB";
@@ -274,7 +282,7 @@ namespace osen
 
 		for (int i = 0; i < queueFamilies.size(); i++)
 		{
-			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags{} 
+			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags{}
 				&& m_physicalDevice.getSurfaceSupportKHR(i, m_surface))
 			{
 				queueFamilyIndex = i;
@@ -312,4 +320,105 @@ namespace osen
 
 		m_graphicsQueue = vk::raii::Queue(m_device, queueFamilyIndex, 0);
 	}
+
+
+	void VulkanRenderer::createSwapchain()
+	{
+		auto surfaceCapabilities = m_physicalDevice.getSurfaceCapabilitiesKHR(m_surface);
+
+		//we want 3 images for some headroom.
+		uint32_t imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+		if (surfaceCapabilities.maxImageCount > 0)
+		{
+			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
+		}
+
+		auto surfaceFormats = m_physicalDevice.getSurfaceFormatsKHR(m_surface);
+		OSEN_ASSERT(!surfaceFormats.empty(), "Vulkan: no surface formats available!");
+		vk::SurfaceFormatKHR surfaceFormat = surfaceFormats[0];
+
+		//for now half copied from the official vulkan tutorial. But simplified
+		vk::SwapchainCreateInfoKHR swapchainInfo{
+			.surface = m_surface,
+			.minImageCount = imageCount,
+			.imageFormat = surfaceFormat.format,
+			.imageColorSpace = surfaceFormat.colorSpace,
+			.imageExtent = surfaceCapabilities.currentExtent, // TODO: this skips some platforms, (might result in crash)
+			.imageArrayLayers = 1,
+			.imageUsage = vk::ImageUsageFlags::BitsType::eColorAttachment,
+			.imageSharingMode = vk::SharingMode::eExclusive,
+			.preTransform = surfaceCapabilities.currentTransform,
+			.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,  // not checking if this is supported (might result in crash)
+			.presentMode = vk::PresentModeKHR::eFifo,				//use this one because it is always available.
+			.clipped = true
+		};
+
+		m_swapchain = vk::raii::SwapchainKHR{ m_device, swapchainInfo };
+		m_swapchainImages = m_swapchain.getImages();
+
+		vk::ImageViewCreateInfo imageViewInfo{
+			.viewType = vk::ImageViewType::e2D, //no idea what this does.
+			.format = surfaceFormat.format,
+			.subresourceRange = vk::ImageSubresourceRange{
+				.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}
+		};
+
+		for (const auto& image : m_swapchainImages)
+		{
+			imageViewInfo.image = image;
+			vk::raii::ImageView imageView{ m_device, imageViewInfo };
+			m_swapchainImageViews.push_back(imageView);
+		}
+	}
+
+	void VulkanRenderer::createGraphicsPipeline()
+	{
+		// TODO:
+		// WARNING: currently, you have to manually compile and copy the spir-v binary
+		// to the working directory. I do not know another way for this, that 
+		// does not require a mega-system with assets and all. so for now. this is it.
+		// if you compile the program and run it, it will tell you the working directory.
+		// copy the produced binary there. this is also in the readme.
+		vk::raii::ShaderModule shaderModule = createShaderModule(readFile("slang.spv"));
+		vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
+			.stage = vk::ShaderStageFlagBits::eVertex,
+			.module = shaderModule,
+			.pName = "vertMain"
+		};
+
+		vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
+			.stage = vk::ShaderStageFlagBits::eFragment,
+			.module = shaderModule,
+			.pName = "fragMain"
+		};
+
+		vk::PipelineShaderStageCreateInfo shaderStages[]
+			= { vertShaderStageInfo, fragShaderStageInfo };
+
+	}
+
+	vk::raii::ShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)
+	{
+		vk::ShaderModuleCreateInfo shaderModuleInfo{
+			.codeSize = code.size(),
+			.pCode = reinterpret_cast<const uint32_t*>(code.data())
+		};
+
+		return vk::raii::ShaderModule(m_device, shaderModuleInfo);
+	}
+
+	static std::vector<char> readFile(const std::string& filename)
+	{
+		std::ifstream file(filename, std::ios::ate | std::ios::binary);
+		if (!file.is_open())
+		{
+			LOG(VulkanLogger, Logger::LogSeverity::ERROR, "cannot open file: " + filename);
+		}
+		std::vector<char> buffer(file.tellg());
+		file.seekg(0, std::ios::beg);
+		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+		file.close();
+		return buffer;
+	}
+
 }//namespace osen

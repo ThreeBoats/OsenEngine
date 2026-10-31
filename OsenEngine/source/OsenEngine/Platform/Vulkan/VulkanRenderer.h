@@ -1,7 +1,7 @@
 #pragma once
 
 #include <OsenEngine/Rendering/Renderer.h>
-
+#include <vector>
 #include <vulkan/vulkan_raii.hpp>
 #include "VulkanWindow.h"
 
@@ -19,6 +19,9 @@ namespace osen
 		void checkPhysicalDevice(const vk::raii::PhysicalDevice& device);
 		void printGpuData();
 		void createLogicalDevice();
+		void createSwapchain();
+		void createGraphicsPipeline();
+		vk::raii::ShaderModule createShaderModule(const std::vector<char>& code);
 
 		bool m_validationLayersEnabled = false;
 
@@ -35,5 +38,8 @@ namespace osen
 		vk::raii::Queue m_graphicsQueue = nullptr;
 
 		vk::raii::SurfaceKHR m_surface = nullptr;
+		vk::raii::SwapchainKHR m_swapchain = nullptr;
+		std::vector<vk::Image> m_swapchainImages;
+		std::vector<vk::ImageView> m_swapchainImageViews;
 	};
 }
