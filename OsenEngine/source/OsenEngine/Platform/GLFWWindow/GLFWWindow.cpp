@@ -39,6 +39,13 @@ void osen::GLFWWindow::processEvents()
 	glfwPollEvents();
 }
 
+osen::Window::FramebufferSize osen::GLFWWindow::getFramebufferSize() const
+{
+	int width = -1, height = -1;
+	glfwGetFramebufferSize(m_window, &width, &height);
+	return FramebufferSize(width, height);
+}
+
 std::vector<const char*> osen::GLFWWindow::requiredVulkanExtensions() const
 {
 	OSEN_ASSERT(m_config.rendererConfig.api == GraphicsAPI::VULKAN,

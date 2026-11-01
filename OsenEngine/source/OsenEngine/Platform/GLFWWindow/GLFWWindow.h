@@ -19,6 +19,7 @@ namespace osen
 		~GLFWWindow();
 
 		void processEvents() override;
+		Window::FramebufferSize getFramebufferSize() const override;
 
 		//vulkan only
 		std::vector<const char*> requiredVulkanExtensions() const override;

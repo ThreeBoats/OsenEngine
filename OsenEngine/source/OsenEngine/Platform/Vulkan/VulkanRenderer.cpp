@@ -333,17 +333,38 @@ namespace osen
 			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 		}
 
+		if (surfaceCapabilities.currentExtent.width !=
+			std::numeric_limits<uint32_t>::max())
+		{
+			m_swapchainExtent = surfaceCapabilities.currentExtent;
+		}
+		else
+		{
+			const Window::FramebufferSize size = m_window.getFramebufferSize();
+
+			m_swapchainExtent = {
+				std::clamp(
+					static_cast<uint32_t>(size.width),
+					surfaceCapabilities.minImageExtent.width,
+					surfaceCapabilities.maxImageExtent.width),
+				std::clamp(
+					static_cast<uint32_t>(size.height),
+					surfaceCapabilities.minImageExtent.height,
+					surfaceCapabilities.maxImageExtent.height)
+			};
+		}
+
 		auto surfaceFormats = m_physicalDevice.getSurfaceFormatsKHR(m_surface);
 		OSEN_ASSERT(!surfaceFormats.empty(), "Vulkan: no surface formats available!");
-		vk::SurfaceFormatKHR surfaceFormat = surfaceFormats[0];
+		m_swapchainSurfaceFormat = surfaceFormats[0];
 
 		//for now half copied from the official vulkan tutorial. But simplified
 		vk::SwapchainCreateInfoKHR swapchainInfo{
 			.surface = m_surface,
 			.minImageCount = imageCount,
-			.imageFormat = surfaceFormat.format,
-			.imageColorSpace = surfaceFormat.colorSpace,
-			.imageExtent = surfaceCapabilities.currentExtent, // TODO: this skips some platforms, (might result in crash)
+			.imageFormat = m_swapchainSurfaceFormat.format,
+			.imageColorSpace = m_swapchainSurfaceFormat.colorSpace,
+			.imageExtent = m_swapchainExtent,
 			.imageArrayLayers = 1,
 			.imageUsage = vk::ImageUsageFlags::BitsType::eColorAttachment,
 			.imageSharingMode = vk::SharingMode::eExclusive,
@@ -358,7 +379,7 @@ namespace osen
 
 		vk::ImageViewCreateInfo imageViewInfo{
 			.viewType = vk::ImageViewType::e2D, //no idea what this does.
-			.format = surfaceFormat.format,
+			.format = m_swapchainSurfaceFormat.format,
 			.subresourceRange = vk::ImageSubresourceRange{
 				.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}
 		};
@@ -395,6 +416,90 @@ namespace osen
 		vk::PipelineShaderStageCreateInfo shaderStages[]
 			= { vertShaderStageInfo, fragShaderStageInfo };
 
+		std::vector<vk::DynamicState> dynamicStates = { 
+			vk::DynamicState::eViewport, 
+			vk::DynamicState::eScissor };
+
+		vk::PipelineDynamicStateCreateInfo dynamicState{ 
+			.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()), 
+			.pDynamicStates = dynamicStates.data() };
+
+		vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{
+			.topology = vk::PrimitiveTopology::eTriangleList
+		};
+
+		vk::Viewport viewport{
+			.width = static_cast<float>(m_swapchainExtent.width),
+			.height = static_cast<float>(m_swapchainExtent.height),
+			.minDepth = 0,
+			.maxDepth = 1
+		};
+
+		vk::Rect2D scissor{
+			.offset = {0, 0},
+			.extent = m_swapchainExtent
+		};
+
+		vk::PipelineViewportStateCreateInfo viewportState{
+			.viewportCount = 1,
+			.pViewports = &viewport,
+			.scissorCount = 1,
+			.pScissors = &scissor
+		};
+
+		//copied from tutorial
+		vk::PipelineRasterizationStateCreateInfo rasterizer
+		{
+			.depthClampEnable = vk::False,
+			.rasterizerDiscardEnable = vk::False,
+			.polygonMode = vk::PolygonMode::eFill,
+			.cullMode = vk::CullModeFlagBits::eNone, // no culling (for now)
+			.frontFace = vk::FrontFace::eClockwise,
+			.depthBiasEnable = vk::False,
+			.lineWidth = 1.0f
+		};
+
+		vk::PipelineMultisampleStateCreateInfo multisampling{
+			.rasterizationSamples = vk::SampleCountFlagBits::e1,
+			.sampleShadingEnable = vk::False };
+
+		vk::PipelineColorBlendAttachmentState colorBlendAttachment{
+			.blendEnable = vk::False,
+			.colorWriteMask = vk::ColorComponentFlagBits::eR
+			| vk::ColorComponentFlagBits::eG
+			| vk::ColorComponentFlagBits::eB
+			| vk::ColorComponentFlagBits::eA
+		};
+
+		vk::PipelineColorBlendStateCreateInfo colorBlending{
+			.logicOpEnable = vk::False,
+			.logicOp = vk::LogicOp::eCopy,
+			.attachmentCount = 1,
+			.pAttachments = &colorBlendAttachment };
+
+		vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+			.setLayoutCount = 0, .pushConstantRangeCount = 0 };
+
+		pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
+
+		vk::StructureChain<vk::GraphicsPipelineCreateInfo,
+			vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
+	{.stageCount = 2,
+	 .pStages = shaderStages,
+	 .pVertexInputState = &vertexInputInfo,
+	 .pInputAssemblyState = &inputAssemblyInfo,
+	 .pViewportState = &viewportState,
+	 .pRasterizationState = &rasterizer,
+	 .pMultisampleState = &multisampling,
+	 .pColorBlendState = &colorBlending,
+	 .pDynamicState = &dynamicState,
+	 .layout = pipelineLayout,
+	 .renderPass = nullptr},
+	{.colorAttachmentCount = 1, .pColorAttachmentFormats = &m_swapchainSurfaceFormat.format} };
+
+		graphicsPipeline = vk::raii::Pipeline(
+			m_device, nullptr, pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
 	}
 
 	vk::raii::ShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code)

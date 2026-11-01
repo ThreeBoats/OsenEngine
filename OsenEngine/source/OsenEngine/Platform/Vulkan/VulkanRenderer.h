@@ -39,7 +39,12 @@ namespace osen
 
 		vk::raii::SurfaceKHR m_surface = nullptr;
 		vk::raii::SwapchainKHR m_swapchain = nullptr;
+		vk::Extent2D m_swapchainExtent;
+		vk::SurfaceFormatKHR m_swapchainSurfaceFormat;
 		std::vector<vk::Image> m_swapchainImages;
 		std::vector<vk::ImageView> m_swapchainImageViews;
+
+		vk::raii::PipelineLayout pipelineLayout = nullptr;
+		vk::raii::Pipeline graphicsPipeline = nullptr;
 	};
 }

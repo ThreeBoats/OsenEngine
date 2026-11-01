@@ -22,6 +22,15 @@ namespace osen
 				"this window does not have a process events function");
 		};
 
+		struct FramebufferSize {
+			int width = -1;
+			int height = -1;
+
+			FramebufferSize(int width, int height) : width(width), height(height) {}
+		};
+
+		virtual FramebufferSize getFramebufferSize() const = 0;
+
 	};
 
 } // namespace osen
