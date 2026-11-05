@@ -21,7 +21,7 @@ int main()
 {
 	osen::WindowConfig windowConfig;
 	windowConfig.height = 600;
-	windowConfig.width = 1200;
+	windowConfig.width = 600;
 	windowConfig.name = "CoolGame.exe (not a virus)";
 
 	osen::RendererConfig rendererConfig;

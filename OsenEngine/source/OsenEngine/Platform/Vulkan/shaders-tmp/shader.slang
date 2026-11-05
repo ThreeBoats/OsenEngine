@@ -4,28 +4,25 @@ static float2 positions[3] = float2[](
     float2(-0.5, 0.5)
 );
 
-static float3 colors[3] = float3[](
-    float3(1.0, 0.0, 0.0),
-    float3(0.0, 1.0, 0.0),
-    float3(0.0, 0.0, 1.0)
-);
-
-struct VertexOutput {
-    float3 color;
-    float4 sv_position : SV_Position;
-};
+static float screenSizeTMP = 600;
 
 [shader("vertex")]
-VertexOutput vertMain(uint vid : SV_VertexID) {
-    VertexOutput output;
-    output.sv_position = float4(positions[vid], 0.0, 1.0);
-    output.color = colors[vid];
-    return output;
+float4 vertMain(uint vid : SV_VertexID) : SV_Position
+{
+    return float4(10*positions[vid], 0.0, 1.0);
 }
 
 [shader("fragment")]
-float4 fragMain(VertexOutput inVert) : SV_Target
+float4 fragMain(float2 pixelPos : SV_Position) : SV_Target
 {
-    float3 color = inVert.color;
-    return float4(color, 1.0);
+    //convert to [-1, 1] space, and tile that.
+    float2 uv = frac(pixelPos / screenSizeTMP) * 2 - 1;
+
+    float d = sqrt(uv.x * uv.x + uv.y * uv.y);
+
+    d = sin(d*12);
+
+    float3 color = float3(d, d, d);
+
+    return float4(color,1.0);
 }
