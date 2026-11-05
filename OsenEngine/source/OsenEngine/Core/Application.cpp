@@ -32,7 +32,7 @@ void osen::Application::run()
 	while (m_isRunning)
 	{
 		m_window->processEvents();
-
+		m_renderer->tmpDraw();
 		std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
 	}
 }

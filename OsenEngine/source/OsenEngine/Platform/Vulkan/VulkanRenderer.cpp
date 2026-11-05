@@ -33,8 +33,10 @@ namespace osen
 		createLogicalDevice();
 		createSwapchain();
 		createGraphicsPipeline();
+		createCommandPool();
+		createCommandBuffer();
+		createSyncObjects();
 	}
-
 
 	void VulkanRenderer::createInstance()
 	{
@@ -147,7 +149,7 @@ namespace osen
 		bool supportsAllRequiredExtensions = false;
 		bool supportsRequiredFeatures = false;
 
-		// Check if the device supports Vulkan 1.3
+		// Check if the device supports Vulkan 1.4
 		auto properties = device.getProperties2();
 
 		if (properties.properties.apiVersion >= vk::ApiVersion14)
@@ -199,6 +201,7 @@ namespace osen
 
 		if (features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters
 			&& features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
+			&& features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2
 			&& features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState)
 		{
 			supportsRequiredFeatures = true;
@@ -278,14 +281,14 @@ namespace osen
 	void VulkanRenderer::createLogicalDevice()
 	{
 		std::vector<vk::QueueFamilyProperties> queueFamilies = m_physicalDevice.getQueueFamilyProperties();
-		unsigned int queueFamilyIndex = 0;
+		m_queueFamilyIndex = 0;
 
 		for (int i = 0; i < queueFamilies.size(); i++)
 		{
 			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags{}
 				&& m_physicalDevice.getSurfaceSupportKHR(i, m_surface))
 			{
-				queueFamilyIndex = i;
+				m_queueFamilyIndex = i;
 				break;
 			}
 		}
@@ -297,13 +300,13 @@ namespace osen
 			featureChain = {
 				{},                                    // vk::PhysicalDeviceFeatures2
 				{.shaderDrawParameters = true},        // vk::PhysicalDeviceVulkan11Features
-				{.dynamicRendering = true},            // vk::PhysicalDeviceVulkan13Features
-				{.extendedDynamicState = true}         // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+				{.synchronization2 = true, .dynamicRendering = true},            // vk::PhysicalDeviceVulkan13Features
+				{.extendedDynamicState = true}       // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
 		};
 
 		float queuePriority = 1.0f;
 		vk::DeviceQueueCreateInfo queueInfo{
-			.queueFamilyIndex = queueFamilyIndex,
+			.queueFamilyIndex = m_queueFamilyIndex,
 			.queueCount = 1,
 			.pQueuePriorities = &queuePriority
 		};
@@ -318,7 +321,7 @@ namespace osen
 		};
 		m_device = vk::raii::Device{ m_physicalDevice, deviceInfo };
 
-		m_graphicsQueue = vk::raii::Queue(m_device, queueFamilyIndex, 0);
+		m_graphicsQueue = vk::raii::Queue(m_device, m_queueFamilyIndex, 0);
 	}
 
 
@@ -388,7 +391,7 @@ namespace osen
 		{
 			imageViewInfo.image = image;
 			vk::raii::ImageView imageView{ m_device, imageViewInfo };
-			m_swapchainImageViews.push_back(imageView);
+			m_swapchainImageViews.push_back(std::move(imageView));
 		}
 	}
 
@@ -416,12 +419,12 @@ namespace osen
 		vk::PipelineShaderStageCreateInfo shaderStages[]
 			= { vertShaderStageInfo, fragShaderStageInfo };
 
-		std::vector<vk::DynamicState> dynamicStates = { 
-			vk::DynamicState::eViewport, 
+		std::vector<vk::DynamicState> dynamicStates = {
+			vk::DynamicState::eViewport,
 			vk::DynamicState::eScissor };
 
-		vk::PipelineDynamicStateCreateInfo dynamicState{ 
-			.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()), 
+		vk::PipelineDynamicStateCreateInfo dynamicState{
+			.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
 			.pDynamicStates = dynamicStates.data() };
 
 		vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
@@ -481,7 +484,7 @@ namespace osen
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
 			.setLayoutCount = 0, .pushConstantRangeCount = 0 };
 
-		pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
+		m_pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
 
 		vk::StructureChain<vk::GraphicsPipelineCreateInfo,
 			vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
@@ -494,11 +497,11 @@ namespace osen
 	 .pMultisampleState = &multisampling,
 	 .pColorBlendState = &colorBlending,
 	 .pDynamicState = &dynamicState,
-	 .layout = pipelineLayout,
+	 .layout = m_pipelineLayout,
 	 .renderPass = nullptr},
 	{.colorAttachmentCount = 1, .pColorAttachmentFormats = &m_swapchainSurfaceFormat.format} };
 
-		graphicsPipeline = vk::raii::Pipeline(
+		m_graphicsPipeline = vk::raii::Pipeline(
 			m_device, nullptr, pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
 	}
 
@@ -510,6 +513,166 @@ namespace osen
 		};
 
 		return vk::raii::ShaderModule(m_device, shaderModuleInfo);
+	}
+
+	void VulkanRenderer::createCommandPool()
+	{
+		vk::CommandPoolCreateInfo createInfo{
+			.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+			.queueFamilyIndex = m_queueFamilyIndex
+		};
+
+		m_commandPool = vk::raii::CommandPool{ m_device, createInfo };
+	}
+
+	void VulkanRenderer::createCommandBuffer()
+	{
+		vk::CommandBufferAllocateInfo allocateInfo{
+			.commandPool = m_commandPool,
+			.commandBufferCount = 1
+		};
+		m_commandBuffer = std::move(vk::raii::CommandBuffers{ m_device, allocateInfo }.front());
+	}
+
+
+	void VulkanRenderer::recordCommandBuffer(unsigned int imageIndex)
+	{
+		//none of the fields apply, but it is required
+		vk::CommandBufferBeginInfo beginInfo{};
+		m_commandBuffer.begin(beginInfo);
+
+		transition_image_layout(
+			imageIndex,
+			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eColorAttachmentOptimal,
+			{},                                                        // srcAccessMask (no need to wait for previous operations)
+			vk::AccessFlagBits2::eColorAttachmentWrite,                // dstAccessMask
+			vk::PipelineStageFlagBits2::eColorAttachmentOutput,        // srcStage
+			vk::PipelineStageFlagBits2::eColorAttachmentOutput         // dstStage
+		);
+
+		vk::ClearValue              clearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
+		vk::RenderingAttachmentInfo attachmentInfo = {
+			.imageView = m_swapchainImageViews[imageIndex],
+			.imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+			.loadOp = vk::AttachmentLoadOp::eClear,  //clear the image before rendering to it
+			.storeOp = vk::AttachmentStoreOp::eStore,
+			.clearValue = clearColor };
+
+		vk::RenderingInfo renderingInfo = {
+			.renderArea = {.offset = {0, 0}, .extent = m_swapchainExtent},
+			.layerCount = 1,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &attachmentInfo };
+
+		m_commandBuffer.beginRendering(renderingInfo);
+
+		m_commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphicsPipeline);
+		m_commandBuffer.setViewport(0,
+			vk::Viewport(0.0f, 0.0f, static_cast<float>(m_swapchainExtent.width),
+				static_cast<float>(m_swapchainExtent.height), 0.0f, 1.0f));
+		m_commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_swapchainExtent));
+
+		///here it is !!!
+		m_commandBuffer.draw(3, 1, 0, 0);
+
+		m_commandBuffer.endRendering();
+
+		transition_image_layout(
+			imageIndex,
+			vk::ImageLayout::eColorAttachmentOptimal,
+			vk::ImageLayout::ePresentSrcKHR,
+			vk::AccessFlagBits2::eColorAttachmentWrite,             // srcAccessMask
+			{},                                                     // dstAccessMask
+			vk::PipelineStageFlagBits2::eColorAttachmentOutput,     // srcStage
+			vk::PipelineStageFlagBits2::eBottomOfPipe               // dstStage
+		);
+
+		m_commandBuffer.end();
+	}
+
+	void VulkanRenderer::createSyncObjects()
+	{
+		m_presentCompleteSemaphore = vk::raii::Semaphore(m_device, vk::SemaphoreCreateInfo());
+		m_renderFinishedSemaphore = vk::raii::Semaphore(m_device, vk::SemaphoreCreateInfo());
+		m_drawFence = vk::raii::Fence(m_device, { .flags = vk::FenceCreateFlagBits::eSignaled });
+
+	}
+
+	void VulkanRenderer::tmpDraw()
+	{
+		auto fenceResult = m_device.waitForFences(*m_drawFence, vk::True, UINT64_MAX);
+		if (fenceResult != vk::Result::eSuccess)
+			LOG(VulkanLogger, Logger::LogSeverity::ERROR, "failed to wait for draw fence");
+
+		m_device.resetFences(*m_drawFence);
+
+		auto [result, imageIndex] = m_swapchain.acquireNextImage(
+			UINT64_MAX, *m_presentCompleteSemaphore, nullptr);
+
+		if (result != vk::Result::eSuccess)
+			LOG(VulkanLogger, Logger::LogSeverity::ERROR, "failed to acquire next image");
+
+		recordCommandBuffer(imageIndex);
+		m_graphicsQueue.waitIdle();
+
+		vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+		vk::SubmitInfo submitInfo{
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &*m_presentCompleteSemaphore,
+			.pWaitDstStageMask = &waitDestinationStageMask,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &*m_commandBuffer,
+			.signalSemaphoreCount = 1,
+			.pSignalSemaphores = &*m_renderFinishedSemaphore
+		};
+
+
+		m_graphicsQueue.submit(submitInfo, *m_drawFence);
+
+		m_graphicsQueue.waitIdle();
+
+		const vk::PresentInfoKHR presentInfoKHR{
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &*m_renderFinishedSemaphore,
+			.swapchainCount = 1,
+			.pSwapchains = &*m_swapchain,
+			.pImageIndices = &imageIndex };
+
+		result = m_graphicsQueue.presentKHR(presentInfoKHR);
+
+	}
+
+	void VulkanRenderer::transition_image_layout(
+		unsigned int            imageIndex,
+		vk::ImageLayout         old_layout,
+		vk::ImageLayout         new_layout,
+		vk::AccessFlags2        src_access_mask,
+		vk::AccessFlags2        dst_access_mask,
+		vk::PipelineStageFlags2 src_stage_mask,
+		vk::PipelineStageFlags2 dst_stage_mask)
+	{
+		vk::ImageMemoryBarrier2 barrier = {
+			.srcStageMask = src_stage_mask,
+			.srcAccessMask = src_access_mask,
+			.dstStageMask = dst_stage_mask,
+			.dstAccessMask = dst_access_mask,
+			.oldLayout = old_layout,
+			.newLayout = new_layout,
+			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.image = m_swapchainImages[imageIndex],
+			.subresourceRange = {
+				   .aspectMask = vk::ImageAspectFlagBits::eColor,
+				   .baseMipLevel = 0,
+				   .levelCount = 1,
+				   .baseArrayLayer = 0,
+				   .layerCount = 1} };
+		vk::DependencyInfo dependency_info = {
+			.dependencyFlags = {},
+			.imageMemoryBarrierCount = 1,
+			.pImageMemoryBarriers = &barrier };
+		m_commandBuffer.pipelineBarrier2(dependency_info);
 	}
 
 	static std::vector<char> readFile(const std::string& filename)
