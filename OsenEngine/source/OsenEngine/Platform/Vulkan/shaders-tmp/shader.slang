@@ -13,16 +13,28 @@ float4 vertMain(uint vid : SV_VertexID) : SV_Position
 }
 
 [shader("fragment")]
-float4 fragMain(float2 pixelPos : SV_Position) : SV_Target
+float4 fragMain(float2 pixelPos : SV_Position, uniform float time) : SV_Target
 {
     //convert to [-1, 1] space, and tile that.
     float2 uv = frac(pixelPos / screenSizeTMP) * 2 - 1;
 
     float d = sqrt(uv.x * uv.x + uv.y * uv.y);
 
-    d = sin(d*12);
+    float speed = 0.4;
+    d = 0.8 * sin(12 * (d-2)+time*speed);
 
-    float3 color = float3(d, d, d);
+    d = fract(d);
+
+    if (d < 0.15)
+        d += 0.4;
+
+    d -= 0.15;
+
+    d = atan2(d, abs(uv.x));
+
+    d = fract(d + time * speed);
+
+    float3 color = float3(d,d,d);
 
     return float4(color,1.0);
 }

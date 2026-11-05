@@ -2,6 +2,7 @@
 
 #include <OsenEngine/Rendering/Renderer.h>
 #include <vector>
+#include <chrono>
 #include <vulkan/vulkan_raii.hpp>
 #include "VulkanWindow.h"
 
@@ -75,5 +76,9 @@ namespace osen
 			vk::raii::Semaphore m_presentCompleteSemaphore = nullptr;
 			vk::raii::Semaphore m_renderFinishedSemaphore = nullptr;
 			vk::raii::Fence m_drawFence = nullptr;
+
+
+			std::chrono::steady_clock::time_point m_startTime =
+				std::chrono::steady_clock::now();
 	};
 }

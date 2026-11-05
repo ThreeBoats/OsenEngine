@@ -491,8 +491,17 @@ namespace osen
 			.attachmentCount = 1,
 			.pAttachments = &colorBlendAttachment };
 
+		vk::PushConstantRange range{
+			.stageFlags = vk::ShaderStageFlagBits::eFragment,
+			.offset = 0,
+			.size = 4  // i think a float is 4 bytes? it is for a time variable
+		};
+
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-			.setLayoutCount = 0, .pushConstantRangeCount = 0 };
+			.setLayoutCount = 0,
+			.pushConstantRangeCount = 1, 
+			.pPushConstantRanges = &range
+		};
 
 		m_pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
 
@@ -577,12 +586,18 @@ namespace osen
 
 		m_commandBuffer.beginRendering(renderingInfo);
 
+
 		m_commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphicsPipeline);
 		m_commandBuffer.setViewport(0,
 			vk::Viewport(0.0f, 0.0f, static_cast<float>(m_swapchainExtent.width),
 				static_cast<float>(m_swapchainExtent.height), 0.0f, 1.0f));
 		m_commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_swapchainExtent));
 
+		float time = std::chrono::duration<float>(
+			std::chrono::steady_clock::now() - m_startTime
+		).count();
+
+		m_commandBuffer.pushConstants(m_pipelineLayout, vk::ShaderStageFlagBits::eFragment, 0, 4, &time);
 		///here it is !!!
 		m_commandBuffer.draw(3, 1, 0, 0);
 
