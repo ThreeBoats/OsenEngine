@@ -23,6 +23,7 @@ namespace osen
 		void createLogicalDevice();
 
 		void createSwapchain();
+		void recreateSwapchain();
 
 		void createGraphicsPipeline();
 		vk::raii::ShaderModule createShaderModule(const std::vector<char>& code);

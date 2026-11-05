@@ -395,6 +395,16 @@ namespace osen
 		}
 	}
 
+	void VulkanRenderer::recreateSwapchain()
+	{
+		m_device.waitIdle();
+		m_swapchain = nullptr;
+		m_swapchainImages.clear();
+		m_swapchainImageViews.clear();
+
+		createSwapchain();
+	}
+
 	void VulkanRenderer::createGraphicsPipeline()
 	{
 		// TODO:
@@ -605,13 +615,23 @@ namespace osen
 		if (fenceResult != vk::Result::eSuccess)
 			LOG(VulkanLogger, Logger::LogSeverity::ERROR, "failed to wait for draw fence");
 
-		m_device.resetFences(*m_drawFence);
 
 		auto [result, imageIndex] = m_swapchain.acquireNextImage(
 			UINT64_MAX, *m_presentCompleteSemaphore, nullptr);
 
-		if (result != vk::Result::eSuccess)
+		bool dirtySwapchain = false;
+
+		if (result == vk::Result::eErrorOutOfDateKHR)
+		{
+			recreateSwapchain();
+			return;
+		}
+		else if (result == vk::Result::eSuboptimalKHR)
+			dirtySwapchain = true;
+		else if (result != vk::Result::eSuccess)
 			LOG(VulkanLogger, Logger::LogSeverity::ERROR, "failed to acquire next image");
+
+		m_device.resetFences(*m_drawFence);
 
 		recordCommandBuffer(imageIndex);
 		m_graphicsQueue.waitIdle();
@@ -640,6 +660,9 @@ namespace osen
 			.pImageIndices = &imageIndex };
 
 		result = m_graphicsQueue.presentKHR(presentInfoKHR);
+
+		if (dirtySwapchain)
+			recreateSwapchain();
 
 	}
 
