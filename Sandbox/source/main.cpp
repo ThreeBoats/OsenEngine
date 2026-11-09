@@ -21,7 +21,7 @@ int main()
 {
 	osen::WindowConfig windowConfig;
 	windowConfig.height = 600;
-	windowConfig.width = 1200;
+	windowConfig.width = 600;
 	windowConfig.name = "CoolGame.exe (not a virus)";
 
 	osen::RendererConfig rendererConfig;
@@ -33,8 +33,6 @@ int main()
 	config.rendererConfig = rendererConfig;
 
 	Sandbox game{ config };
-
-	LOG(gameLog, osen::Logger::LogSeverity::WARNING, "dit is gedaan via macro. wauwie");
 
 	game.run();
 }

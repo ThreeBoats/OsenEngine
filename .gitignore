@@ -13,3 +13,6 @@ Doxyfile.bak
 
 #cmake
 CMakePresets.json
+
+#spir-v bytecode
+*.spv

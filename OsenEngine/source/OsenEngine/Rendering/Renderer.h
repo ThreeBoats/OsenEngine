@@ -7,13 +7,13 @@
 
 namespace osen
 {
-	
 
 	class Renderer
 	{
 	public:
 		static std::unique_ptr<Renderer> create(EngineConfig config, const Window& window);
 
+		virtual void tmpDraw() = 0;
 
 		//the default because otherwise I get linker error. 
 		virtual ~Renderer() = default;

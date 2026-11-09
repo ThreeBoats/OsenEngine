@@ -7,13 +7,13 @@
 
 #include <thread>
 #include <chrono>
+#include <filesystem>
 
 #include <vulkan/vulkan.hpp>
 
 osen::Application::Application(EngineConfig config)
 {
-	WindowConfig windowConfig = config.windowConfig;
-
+	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
 	m_window = Window::create(config);
 	m_renderer = Renderer::create(config, *m_window);
 }
@@ -25,12 +25,14 @@ osen::Application::~Application()
 
 void osen::Application::run()
 {
-	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
+	LOG(coreLogger, Logger::LogSeverity::INFO, "engine ready");
+	LOG(coreLogger, Logger::LogSeverity::INFO,
+		"working directory: " + std::filesystem::current_path().string());
 
 	while (m_isRunning)
 	{
 		m_window->processEvents();
-
+		m_renderer->tmpDraw();
 		std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
 	}
 }

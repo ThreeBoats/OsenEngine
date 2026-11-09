@@ -5,6 +5,8 @@
 
 #include <OsenEngine/Core/Config.h>
 
+#include <GLFW/glfw3.h>
+
 osen::GLFWWindow::GLFWWindow(EngineConfig config)
 {
 	m_config = config;
@@ -37,8 +39,18 @@ void osen::GLFWWindow::processEvents()
 	glfwPollEvents();
 }
 
+osen::Window::FramebufferSize osen::GLFWWindow::getFramebufferSize() const
+{
+	int width = -1, height = -1;
+	glfwGetFramebufferSize(m_window, &width, &height);
+	return FramebufferSize(width, height);
+}
+
 std::vector<const char*> osen::GLFWWindow::requiredVulkanExtensions() const
 {
+	OSEN_ASSERT(m_config.rendererConfig.api == GraphicsAPI::VULKAN,
+		"vulkan specific function called while not using vulkan.");
+
 	uint32_t count = 0;
 	const char** extensions =
 		glfwGetRequiredInstanceExtensions(&count);
@@ -53,6 +65,17 @@ std::vector<const char*> osen::GLFWWindow::requiredVulkanExtensions() const
 	};
 }
 
+vk::raii::SurfaceKHR osen::GLFWWindow::createSurface(const vk::raii::Instance& instance) const
+{
+	VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
+
+	const VkResult result = glfwCreateWindowSurface(static_cast<VkInstance>(*instance),
+		m_window,
+		nullptr,
+		&rawSurface);
+
+	return vk::raii::SurfaceKHR(instance, rawSurface);
+}
 
 void osen::GLFWWindow::setCallbacks()
 {

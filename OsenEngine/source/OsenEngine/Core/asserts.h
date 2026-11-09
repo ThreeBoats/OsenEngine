@@ -3,11 +3,10 @@
 #include "Logging/Logger.h"
 #include "Logging/internal/coreLogger.h"
 
-
 //first define OSEN_BREAK, because the compiler does
 //not like #ifdef's in #define
 ///do not use this standalone
-#ifdef OSEN_RELEASE
+#if defined(OSEN_RELEASE) || defined(OSEN_DEV)
     #define OSEN_ASSERT(condition, message) do {} while(false)
 #else
     //I am not sure if WIN32 is the correct thing to check.

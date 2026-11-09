@@ -22,10 +22,15 @@ namespace osen
 				"this window does not have a process events function");
 		};
 
+		struct FramebufferSize {
+			int width = -1;
+			int height = -1;
 
-		//VULKAN ONLY (I think)
+			FramebufferSize(int width, int height) : width(width), height(height) {}
+		};
 
-		virtual std::vector<const char*> requiredVulkanExtensions() const = 0;
+		virtual FramebufferSize getFramebufferSize() const = 0;
+
 	};
 
 } // namespace osen
