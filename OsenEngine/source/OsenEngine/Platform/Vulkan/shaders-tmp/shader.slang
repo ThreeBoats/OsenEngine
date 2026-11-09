@@ -34,7 +34,7 @@ float4 fragMain(float2 pixelPos : SV_Position, uniform float time) : SV_Target
 
     d = fract(d + time * speed);
 
-    float3 color = float3(d,d,d);
+    float3 color = float3(d, d * 0.95 + sin(time) * 0.05, d);
 
     return float4(color,1.0);
 }
