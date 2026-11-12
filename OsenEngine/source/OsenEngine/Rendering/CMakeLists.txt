@@ -1,3 +1,3 @@
 target_sources(OsenEngine PRIVATE
 "Renderer.h" "Renderer.cpp"
- "logging/RenderingLogger.h")
+ "logging/RenderingLogger.h" "RenderDevice.h" "RenderDevice.cpp")

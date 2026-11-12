@@ -4,11 +4,12 @@
 #include <chrono>
 
 #include "Window.h"
-#include <OsenEngine/Rendering/Renderer.h>
 
 #include "Config.h"
 
 namespace osen {
+	class Renderer;
+
 	class Application
 	{
 	public:

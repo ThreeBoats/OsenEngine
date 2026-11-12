@@ -5,17 +5,20 @@
 
 #include <OsenEngine/Core/Window.h>
 
+
 namespace osen
 {
+class RenderDevice;
 
 	class Renderer
 	{
 	public:
-		static std::unique_ptr<Renderer> create(EngineConfig config, const Window& window);
+		Renderer(EngineConfig config);
+		~Renderer();
 
-		virtual void tmpDraw() = 0;
+		void tmpDraw();
+	private:
+		std::unique_ptr<RenderDevice> m_renderDevice;
 
-		//the default because otherwise I get linker error. 
-		virtual ~Renderer() = default;
 	};
 }

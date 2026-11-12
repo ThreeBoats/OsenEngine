@@ -9,13 +9,13 @@
 #include <chrono>
 #include <filesystem>
 
-#include <vulkan/vulkan.hpp>
+#include <OsenEngine/Rendering/Renderer.h>
 
 osen::Application::Application(EngineConfig config)
 {
 	LOG(coreLogger, Logger::LogSeverity::INFO, "engine started");
 	m_window = Window::create(config);
-	m_renderer = Renderer::create(config, *m_window);
+	m_renderer = std::make_unique<Renderer>(config);
 }
 
 osen::Application::~Application()
